@@ -1,4 +1,3 @@
-
 # Video Enhancement Core Script
 
 **Author: aezi zhu (github.com/aezizhu)**
@@ -28,14 +27,53 @@ This script is a stable, lightweight, and powerful control center for web videos
     *   [Tampermonkey](https://www.tampermonkey.net/) (Supports Chrome, Firefox, Edge, Safari)
     *   [Violentmonkey](https://violentmonkey.github.io/) (Supports Chrome, Firefox, Edge)
 2.  With the manager installed, click the link below to install the script:
-    *   **[Click to Install](https://.../script.core.js)** (Replace this with the actual raw file link from your GitHub repo)
+    *   **[Click to Install](https://github.com/aezizhu/video-enhancement-core/raw/main/script.core.js)**
 3.  A new tab will open. Click the "Install" button.
 
-## ⌨️ How to Use (Hotkey Reference)
+## 📚 Usage Guide & Tutorial
 
-Hover your mouse over the target video to use the following hotkeys.
+This guide will walk you through how to use the script effectively.
 
-### Playback Control
+### Getting Started
+
+Once installed, the script works automatically. Simply navigate to any webpage containing an HTML5 video. To activate the controls, **hover your mouse cursor over the video player**. All controls are activated by keyboard shortcuts.
+
+Most actions (like changing speed or volume) will show a small, temporary confirmation message on the screen, so you know your command has been received.
+
+### Common Scenarios
+
+Here are a few examples of how you might use the script in real situations:
+
+**Scenario 1: Watching a Lecture or Tutorial**
+
+> You're watching a long online course. The speaker is a bit slow, and you want to speed things up. You also need to occasionally jump back to review a concept.
+
+- **Increase speed**: Press the `C` key repeatedly until you find a comfortable speed (e.g., 1.5x). The current speed will be displayed on screen.
+- **Too fast?**: Press the `X` key to slow it down.
+- **Reset speed**: Press the `Z` key to instantly return to the normal 1.0x speed.
+- **Jump back**: Press the `←` key to go back 5 seconds. For a bigger jump, press `Ctrl` + `←` to go back 30 seconds.
+
+**Scenario 2: Fixing a Dark or Quiet Video**
+
+> You're trying to watch a video that was recorded in low light, and the audio is very quiet.
+
+- **Increase Brightness**: Press the `W` key. The video will become brighter. If it's still too dark, press it again.
+- **Adjust Contrast**: If the image looks washed out after increasing brightness, press `R` to increase the contrast.
+- **Boost Volume**: Press the `↑` key to increase the volume. You can go past the website's 100% limit, up to 200%.
+
+**Scenario 3: Multitasking or Immersive Viewing**
+
+> You want to keep an eye on a video while working in another window, or you want to get rid of all browser distractions.
+
+- **Picture-in-Picture (PiP)**: Press `Shift` + `P`. The video will pop out into a small, floating window that stays on top of all your other applications. You can drag it anywhere on the screen.
+- **Web Fullscreen**: Press `Shift` + `Enter`. This makes the video fill the entire browser window, hiding other parts of the webpage.
+- **True Fullscreen**: Press `Enter`. This makes the video fill your entire monitor.
+
+### Full Hotkey Reference
+
+Here is the complete list of available shortcuts.
+
+#### Playback Control
 
 | Hotkey | Function |
 | :--- | :--- |
@@ -47,7 +85,7 @@ Hover your mouse over the target video to use the following hotkeys.
 | `F` | Next Frame (when paused) |
 | `D` | Previous Frame (when paused) |
 
-### Speed Control
+#### Speed Control
 
 | Hotkey | Function |
 | :--- | :--- |
@@ -56,7 +94,7 @@ Hover your mouse over the target video to use the following hotkeys.
 | `Z` | Reset Speed to 1.0x |
 | `1`, `2`, `3`, `4` | Set speed directly to 1x, 2x, 3x, 4x |
 
-### Volume Control
+#### Volume Control
 
 | Hotkey | Function |
 | :--- | :--- |
@@ -65,7 +103,7 @@ Hover your mouse over the target video to use the following hotkeys.
 | `Ctrl` + `↑` | Increase Volume by 20% |
 | `Ctrl` + `↓` | Decrease Volume by 20% |
 
-### Picture Adjustment
+#### Picture Adjustment
 
 | Hotkey | Function |
 | :--- | :--- |
@@ -78,7 +116,7 @@ Hover your mouse over the target video to use the following hotkeys.
 | `M` | Flip horizontally (mirror) |
 | `Shift` + `M` | Flip vertically (mirror) |
 
-### Display & Tools
+#### Display & Tools
 
 | Hotkey | Function |
 | :--- | :--- |
