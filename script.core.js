@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Video Enhancement Core
 // @name:en      Video Enhancement Core
-// @version      1.2.0
+// @version      1.3.0
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu (github.com/aezizhu)
 // @match        *://*/*
@@ -346,12 +346,31 @@
             return;
         }
 
+        // Build modifier key string in correct order: ctrl -> shift -> alt
         let key = e.key.toLowerCase();
-        if (e.ctrlKey) key = 'ctrl+' + key;
-        if (e.shiftKey) key = 'shift+' + key;
-        if (e.altKey) key = 'alt+' + key;
+        const modifiers = [];
+        if (e.ctrlKey || e.metaKey) modifiers.push('ctrl');
+        if (e.shiftKey) modifiers.push('shift');
+        if (e.altKey) modifiers.push('alt');
+        
+        if (modifiers.length > 0) {
+            key = modifiers.join('+') + '+' + key;
+        }
 
         const hotkey = config.defaultSettings.hotkeys[key];
+
+        // Debug logging
+        if (window._debugHotkeys_) {
+            console.log('[Hotkey Debug]', {
+                pressed: key,
+                found: !!hotkey,
+                activeController: !!activeController,
+                rawKey: e.key,
+                ctrl: e.ctrlKey,
+                shift: e.shiftKey,
+                alt: e.altKey
+            });
+        }
 
         if (hotkey && activeController) {
             e.preventDefault();
@@ -405,4 +424,5 @@
     findMediaElements();
     
     console.log('Video Enhancement Core loaded. Copyright (c) 2025, aezi zhu (github.com/aezizhu)');
+    console.log('💡 Tip: Set window._debugHotkeys_ = true to enable hotkey debugging');
 })();

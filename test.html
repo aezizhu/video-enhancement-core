@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Enhancement Core - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .debug-controls {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        .debug-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        .debug-btn:hover {
+            background: #45a049;
+        }
+        .debug-btn.active {
+            background: #ff9800;
+        }
+        .video-container {
+            margin: 20px 0;
+            background: #000;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        video {
+            width: 100%;
+            max-width: 800px;
+            display: block;
+            margin: 0 auto;
+        }
+        .instructions {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .hotkey-section {
+            margin-bottom: 15px;
+        }
+        .hotkey-section h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #444;
+        }
+        th {
+            background: #333;
+            color: #4CAF50;
+        }
+        .key {
+            background: #444;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .highlight {
+            background: #ff9800;
+            padding: 3px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Video Enhancement Core - Test Page</h1>
+    
+    <div class="debug-controls">
+        <button id="debugToggle" class="debug-btn">
+            🐛 Enable Hotkey Debug Mode
+        </button>
+        <p id="debugStatus" style="margin-top: 10px; color: #888;">Debug mode: OFF (check console)</p>
+    </div>
+    
+    <div class="video-container">
+        <video id="testVideo" controls>
+            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
+
+    <div class="instructions">
+        <h2>📋 Hotkey Instructions</h2>
+        <p><strong>⚠️ Important:</strong> Hover over or play the video first to activate controls!</p>
+
+        <div class="hotkey-section">
+            <h3>🎨 Picture Adjustment</h3>
+            <table>
+                <tr>
+                    <th>Hotkey</th>
+                    <th>Function</th>
+                </tr>
+                <tr>
+                    <td><span class="key">W</span> / <span class="key">E</span></td>
+                    <td>Increase / Decrease Brightness</td>
+                </tr>
+                <tr>
+                    <td><span class="key">R</span> / <span class="key">T</span></td>
+                    <td>Increase / Decrease Contrast</td>
+                </tr>
+                <tr>
+                    <td><span class="key">Y</span> / <span class="key">U</span></td>
+                    <td>Increase / Decrease Saturation</td>
+                </tr>
+                <tr>
+                    <td><span class="key">I</span> / <span class="key">O</span></td>
+                    <td>Increase / Decrease Hue</td>
+                </tr>
+                <tr>
+                    <td><span class="key">J</span> / <span class="key">K</span></td>
+                    <td>Increase / Decrease Blur</td>
+                </tr>
+                <tr>
+                    <td><span class="key">S</span></td>
+                    <td>Rotate picture by 90 degrees</td>
+                </tr>
+                <tr>
+                    <td><span class="key">M</span></td>
+                    <td>Flip horizontally (mirror)</td>
+                </tr>
+                <tr>
+                    <td><span class="key">Shift+M</span></td>
+                    <td>Flip vertically (mirror)</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="hotkey-section">
+            <h3>🖥️ Display & Tools <span class="highlight">← TEST THESE!</span></h3>
+            <table>
+                <tr>
+                    <th>Hotkey</th>
+                    <th>Function</th>
+                </tr>
+                <tr>
+                    <td><span class="key">Enter</span></td>
+                    <td>Toggle Browser Fullscreen</td>
+                </tr>
+                <tr style="background: rgba(255, 152, 0, 0.1);">
+                    <td><span class="key">Shift+Enter</span></td>
+                    <td><strong>Toggle Web Fullscreen</strong></td>
+                </tr>
+                <tr style="background: rgba(255, 152, 0, 0.1);">
+                    <td><span class="key">Shift+P</span></td>
+                    <td><strong>Toggle Picture-in-Picture</strong></td>
+                </tr>
+                <tr style="background: rgba(255, 152, 0, 0.1);">
+                    <td><span class="key">Shift+S</span></td>
+                    <td><strong>Take Screenshot</strong></td>
+                </tr>
+                <tr style="background: rgba(255, 152, 0, 0.1);">
+                    <td><span class="key">Shift+D</span></td>
+                    <td><strong>Download Media</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="hotkey-section">
+            <h3>⏯️ Playback Control</h3>
+            <table>
+                <tr>
+                    <th>Hotkey</th>
+                    <th>Function</th>
+                </tr>
+                <tr>
+                    <td><span class="key">Space</span></td>
+                    <td>Toggle Play/Pause</td>
+                </tr>
+                <tr>
+                    <td><span class="key">→</span> / <span class="key">←</span></td>
+                    <td>Seek ±5 seconds</td>
+                </tr>
+                <tr>
+                    <td><span class="key">Ctrl+→</span> / <span class="key">Ctrl+←</span></td>
+                    <td>Seek ±30 seconds</td>
+                </tr>
+                <tr>
+                    <td><span class="key">F</span> / <span class="key">D</span></td>
+                    <td>Next/Previous Frame (when paused)</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="hotkey-section">
+            <h3>⚡ Speed Control</h3>
+            <table>
+                <tr>
+                    <th>Hotkey</th>
+                    <th>Function</th>
+                </tr>
+                <tr>
+                    <td><span class="key">C</span> / <span class="key">X</span></td>
+                    <td>Increase/Decrease Speed by 0.1x</td>
+                </tr>
+                <tr>
+                    <td><span class="key">Z</span></td>
+                    <td>Reset Speed to 1.0x</td>
+                </tr>
+                <tr>
+                    <td><span class="key">1</span> <span class="key">2</span> <span class="key">3</span> <span class="key">4</span></td>
+                    <td>Set speed to 1x, 2x, 3x, 4x</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Debug mode toggle
+        const debugToggle = document.getElementById('debugToggle');
+        const debugStatus = document.getElementById('debugStatus');
+        let debugMode = false;
+
+        debugToggle.addEventListener('click', () => {
+            debugMode = !debugMode;
+            window._debugHotkeys_ = debugMode;
+            
+            if (debugMode) {
+                debugToggle.textContent = '🐛 Disable Hotkey Debug Mode';
+                debugToggle.classList.add('active');
+                debugStatus.textContent = 'Debug mode: ON (check console for hotkey info)';
+                debugStatus.style.color = '#ff9800';
+                console.log('%c[Debug Mode] Enabled - All hotkey presses will be logged', 'background: #ff9800; color: white; padding: 4px 8px; border-radius: 3px;');
+            } else {
+                debugToggle.textContent = '🐛 Enable Hotkey Debug Mode';
+                debugToggle.classList.remove('active');
+                debugStatus.textContent = 'Debug mode: OFF';
+                debugStatus.style.color = '#888';
+                console.log('[Debug Mode] Disabled');
+            }
+        });
+        
+        // Video event listeners for debugging
+        const video = document.getElementById('testVideo');
+        
+        video.addEventListener('play', () => {
+            console.log('✅ Video playing - controls should be active');
+        });
+        
+        video.addEventListener('mouseenter', () => {
+            console.log('✅ Mouse over video - controls should be active');
+        });
+
+        console.log('Test page loaded. Waiting for userscript to initialize...');
+        console.log('💡 Click the debug button above to enable hotkey debugging');
+    </script>
+</body>
+</html>
