@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Video Enhancement Core
 // @name:en      Video Enhancement Core
-// @version      1.5.0
+// @version      1.6.0
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu (github.com/aezizhu)
 // @match        *://*/*
@@ -276,7 +276,32 @@
         }
 
         toggleWebFullScreen() {
-            // Inject style if not already present
+            // Site-specific web fullscreen selectors (preferred method)
+            const siteSelectors = {
+                'youtube.com': 'button.ytp-size-button',
+                'bilibili.com': ['.bpx-player-ctrl-web-enter', '.bpx-player-ctrl-web-leave', '.squirtle-pagefullscreen-inactive', '.squirtle-pagefullscreen-active'],
+                'live.bilibili.com': '.bilibili-live-player-video-controller-web-fullscreen-btn button',
+                'douyin.com': '.xgplayer-page-full-screen',
+                'live.douyin.com': '.xgplayer-page-full-screen'
+            };
+
+            // Try site-specific button first
+            const hostname = window.location.hostname;
+            for (const [domain, selector] of Object.entries(siteSelectors)) {
+                if (hostname.includes(domain)) {
+                    const selectors = Array.isArray(selector) ? selector : [selector];
+                    for (const sel of selectors) {
+                        const button = document.querySelector(sel);
+                        if (button && getComputedStyle(button).display !== 'none') {
+                            button.click();
+                            showToast('🖥️ Web Fullscreen Toggled');
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // Fallback: CSS-based web fullscreen
             if (!document.getElementById('web-fullscreen-style')) {
                 const style = document.createElement('style');
                 style.id = 'web-fullscreen-style';
@@ -397,7 +422,14 @@
 
     // --- Hotkey Handler ---
     window.addEventListener('keydown', (e) => {
-        if (!config.get('enableHotkeys') || isEditable(e.target)) {
+        // Check if hotkeys are disabled or if typing in an editable field
+        const hotkeyDisabled = !config.get('enableHotkeys');
+        const inEditableField = isEditable(e.target);
+        
+        if (hotkeyDisabled || inEditableField) {
+            if (window._debugHotkeys_) {
+                console.log('[Hotkey] Skipped:', { hotkeyDisabled, inEditableField });
+            }
             return;
         }
 
@@ -414,22 +446,30 @@
 
         const hotkey = config.defaultSettings.hotkeys[key];
 
-        // Debug logging
+        // Enhanced debug logging
         if (window._debugHotkeys_) {
             console.log('[Hotkey Debug]', {
                 pressed: key,
-                found: !!hotkey,
-                activeController: !!activeController,
                 rawKey: e.key,
+                keyCode: e.keyCode,
+                found: !!hotkey,
+                action: hotkey?.action,
+                activeController: !!activeController,
                 ctrl: e.ctrlKey,
                 shift: e.shiftKey,
-                alt: e.altKey
+                alt: e.altKey,
+                target: e.target.tagName,
+                defaultPrevented: e.defaultPrevented
             });
         }
 
         if (hotkey && activeController) {
             e.preventDefault();
             e.stopPropagation();
+            
+            if (window._debugHotkeys_) {
+                console.log('[Hotkey] Executing action:', hotkey.action);
+            }
             
             const { action, value, filter, axis } = hotkey;
             if (typeof activeController[action] === 'function') {
@@ -443,7 +483,11 @@
                 } else {
                     activeController[action]();
                 }
+            } else if (window._debugHotkeys_) {
+                console.error('[Hotkey] Action not found:', action);
             }
+        } else if (window._debugHotkeys_ && hotkey && !activeController) {
+            console.warn('[Hotkey] No active controller! Hover over or play the video first.');
         }
     }, true);
 
@@ -478,6 +522,21 @@
     // Initial scan
     findMediaElements();
     
+    // Auto-activate the first video after a short delay
+    setTimeout(() => {
+        if (!activeController) {
+            const firstVideo = document.querySelector('video');
+            if (firstVideo) {
+                const controller = controllers.get(firstVideo);
+                if (controller) {
+                    activeController = controller;
+                    console.log('Auto-activated first video for hotkey control');
+                }
+            }
+        }
+    }, 1000);
+    
     console.log('Video Enhancement Core loaded. Copyright (c) 2025, aezi zhu (github.com/aezizhu)');
     console.log('💡 Tip: Set window._debugHotkeys_ = true to enable hotkey debugging');
+    console.log('🎬 Videos will auto-activate after 1 second, or hover/play to activate');
 })();
