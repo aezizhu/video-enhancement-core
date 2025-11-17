@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Video Enhancement Core
 // @name:en      Video Enhancement Core
-// @version      1.1.0
+// @version      1.2.0
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu (github.com/aezizhu)
 // @match        *://*/*
@@ -359,7 +359,16 @@
             
             const { action, value, filter, axis } = hotkey;
             if (typeof activeController[action] === 'function') {
-                activeController[action](value !== undefined ? value : (filter || axis));
+                // Handle different action types with correct parameters
+                if (action === 'adjustFilter') {
+                    activeController[action](filter, value);
+                } else if (action === 'toggleMirror') {
+                    activeController[action](axis);
+                } else if (value !== undefined) {
+                    activeController[action](value);
+                } else {
+                    activeController[action]();
+                }
             }
         }
     }, true);
