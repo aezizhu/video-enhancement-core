@@ -131,6 +131,7 @@
     }
 
     function showToast(message, duration = 2000) {
+        if (!document.body) return; // Ensure body exists
         let toast = document.querySelector('.enhancement-core-toast');
         if (!toast) {
             toast = document.createElement('div');
@@ -231,12 +232,16 @@
         toggleRotation() {
             this.transform.rotate = (this.transform.rotate + 90) % 360;
             this.applyStyles();
+            showToast(`Rotation: ${this.transform.rotate}°`);
         }
 
         toggleMirror(axis) {
             if (axis === 'X') this.transform.scaleX *= -1;
             if (axis === 'Y') this.transform.scaleY *= -1;
             this.applyStyles();
+            const direction = axis === 'X' ? 'Horizontal' : 'Vertical';
+            const state = (axis === 'X' ? this.transform.scaleX : this.transform.scaleY) < 0 ? 'ON' : 'OFF';
+            showToast(`${direction} Mirror: ${state}`);
         }
 
         toggleFullScreen() {
