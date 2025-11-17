@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Video Enhancement Core
 // @name:en      Video Enhancement Core
-// @version      1.4.0
+// @version      1.5.0
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu (github.com/aezizhu)
 // @match        *://*/*
@@ -105,6 +105,7 @@
                 // Display & Fullscreen
                 'enter': { action: 'toggleFullScreen', desc: 'Toggle Browser Fullscreen' },
                 'shift+enter': { action: 'toggleWebFullScreen', desc: 'Toggle Web Fullscreen' },
+                'escape': { action: 'exitWebFullScreen', desc: 'Exit Web Fullscreen' },
                 'shift+p': { action: 'togglePictureInPicture', desc: 'Toggle Picture-in-Picture' },
                 'shift+s': { action: 'capture', desc: 'Screenshot' },
                 // Media Download
@@ -275,22 +276,54 @@
         }
 
         toggleWebFullScreen() {
-            this.media.classList.toggle('web-fullscreen');
+            // Inject style if not already present
             if (!document.getElementById('web-fullscreen-style')) {
                 const style = document.createElement('style');
                 style.id = 'web-fullscreen-style';
                 style.textContent = `
                     .web-fullscreen {
                         position: fixed !important;
-                        top: 0 !important; left: 0 !important;
-                        width: 100vw !important; height: 100vh !important;
-                        max-width: none !important; max-height: none !important;
+                        top: 0 !important;
+                        left: 0 !important;
+                        width: 100vw !important;
+                        height: 100vh !important;
+                        max-width: none !important;
+                        max-height: none !important;
                         z-index: 2147483646 !important;
                         object-fit: contain !important;
+                        background: #000 !important;
                     }
                 `;
                 document.head.appendChild(style);
             }
+
+            const isEntering = !this.media.classList.contains('web-fullscreen');
+            
+            if (isEntering) {
+                // Remove web-fullscreen from other videos
+                document.querySelectorAll('.web-fullscreen').forEach(el => {
+                    if (el !== this.media) {
+                        el.classList.remove('web-fullscreen');
+                    }
+                });
+                
+                this.media.classList.add('web-fullscreen');
+                showToast('🖥️ Web Fullscreen: ON');
+            } else {
+                this.media.classList.remove('web-fullscreen');
+                showToast('🖥️ Web Fullscreen: OFF');
+            }
+        }
+
+        exitWebFullScreen() {
+            // Exit web fullscreen for all videos
+            const webFullscreenVideos = document.querySelectorAll('.web-fullscreen');
+            if (webFullscreenVideos.length > 0) {
+                webFullscreenVideos.forEach(el => el.classList.remove('web-fullscreen'));
+                showToast('🖥️ Web Fullscreen: OFF');
+                return true;
+            }
+            return false;
         }
 
         togglePictureInPicture() {
