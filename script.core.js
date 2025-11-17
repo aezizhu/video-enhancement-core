@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Video Enhancement Core
 // @name:en      Video Enhancement Core
-// @version      1.3.0
+// @version      1.4.0
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu (github.com/aezizhu)
 // @match        *://*/*
@@ -101,6 +101,7 @@
                 's': { action: 'toggleRotation', desc: 'Rotate 90deg' },
                 'm': { action: 'toggleMirror', axis: 'X', desc: 'Horizontal Mirror' },
                 'shift+m': { action: 'toggleMirror', axis: 'Y', desc: 'Vertical Mirror' },
+                'q': { action: 'resetFilterAndTransform', desc: 'Reset All Picture Adjustments' },
                 // Display & Fullscreen
                 'enter': { action: 'toggleFullScreen', desc: 'Toggle Browser Fullscreen' },
                 'shift+enter': { action: 'toggleWebFullScreen', desc: 'Toggle Web Fullscreen' },
@@ -242,6 +243,27 @@
             const direction = axis === 'X' ? 'Horizontal' : 'Vertical';
             const state = (axis === 'X' ? this.transform.scaleX : this.transform.scaleY) < 0 ? 'ON' : 'OFF';
             showToast(`${direction} Mirror: ${state}`);
+        }
+
+        resetFilterAndTransform() {
+            // Reset all filters to default values
+            this.filters = {
+                brightness: 1,
+                contrast: 1,
+                saturate: 1,
+                hue: 0,
+                blur: 0,
+            };
+            // Reset all transforms to default values
+            this.transform = {
+                rotate: 0,
+                scaleX: 1,
+                scaleY: 1,
+                translateX: 0,
+                translateY: 0,
+            };
+            this.applyStyles();
+            showToast('✨ All picture adjustments reset');
         }
 
         toggleFullScreen() {
