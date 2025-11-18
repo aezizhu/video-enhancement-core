@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Video Enhancement Core
 // @name:en      Video Enhancement Core
-// @version      1.6.0
+// @version      1.6.1
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu (github.com/aezizhu)
 // @match        *://*/*
@@ -75,7 +75,7 @@
                 '3': { action: 'setPlaybackRate', value: 3.0, desc: 'Set Speed to 3x' },
                 '4': { action: 'setPlaybackRate', value: 4.0, desc: 'Set Speed to 4x' },
                 // Playback Control
-                ' ': { action: 'togglePlay', desc: 'Toggle Play/Pause' },
+                // Spacebar removed - websites handle it natively
                 'arrowright': { action: 'seek', value: 5, desc: 'Seek Forward 5s' },
                 'arrowleft': { action: 'seek', value: -5, desc: 'Seek Backward 5s' },
                 'ctrl+arrowright': { action: 'seek', value: 30, desc: 'Seek Forward 30s' },
@@ -169,6 +169,8 @@
             this.media = mediaElement;
             this.filters = { ...config.get('filters') };
             this.transform = { ...config.get('transform') };
+            this._restoreTimeout = null;
+            this._isRestoring = false;
             this.init();
         }
 
@@ -177,6 +179,61 @@
             this.media.playbackRate = config.get('playbackRate');
             this.media.volume = config.get('volume');
             this.applyStyles();
+            
+            // Set up event listeners to restore playback rate when video loads
+            this.setupPlaybackRateRestoration();
+        }
+
+        restorePlaybackRate() {
+            // Skip if already restoring to prevent infinite loops
+            if (this._isRestoring) return;
+            
+            const savedRate = config.get('playbackRate');
+            const currentRate = this.media.playbackRate;
+            
+            // Only restore if rate differs from saved value
+            if (Math.abs(currentRate - savedRate) > 0.01) {
+                this._isRestoring = true;
+                this.media.playbackRate = savedRate;
+                
+                if (window._debugHotkeys_) {
+                    console.log('[restorePlaybackRate]', {
+                        currentRate: currentRate,
+                        savedRate: savedRate,
+                        restored: true
+                    });
+                }
+                
+                // Reset flag after a short delay
+                setTimeout(() => {
+                    this._isRestoring = false;
+                }, 100);
+            }
+        }
+
+        setupPlaybackRateRestoration() {
+            // Debounced restoration function
+            const debouncedRestore = () => {
+                if (this._restoreTimeout) {
+                    clearTimeout(this._restoreTimeout);
+                }
+                this._restoreTimeout = setTimeout(() => {
+                    this.restorePlaybackRate();
+                }, 100);
+            };
+
+            // Listen to video lifecycle events
+            this.media.addEventListener('loadedmetadata', debouncedRestore);
+            this.media.addEventListener('canplay', debouncedRestore);
+            this.media.addEventListener('play', debouncedRestore);
+            
+            // Optionally listen to ratechange to detect external modifications
+            // But only restore if it wasn't changed by us
+            this.media.addEventListener('ratechange', () => {
+                if (!this._isRestoring) {
+                    debouncedRestore();
+                }
+            });
         }
 
         applyStyles() {
@@ -210,17 +267,36 @@
         }
 
         adjustPlaybackRate(delta) {
+            if (window._debugHotkeys_) {
+                console.log('[adjustPlaybackRate]', {
+                    currentRate: this.media.playbackRate,
+                    delta: delta,
+                    expectedNewRate: this.media.playbackRate + delta
+                });
+            }
             let newRate = this.media.playbackRate + delta;
             newRate = Math.max(0.1, Math.min(16, newRate));
+            // Set flag to prevent restoration during our own changes
+            this._isRestoring = true;
             this.media.playbackRate = newRate;
             config.set('playbackRate', newRate);
             showToast(`Speed: ${newRate.toFixed(2)}x`);
+            // Reset flag after a short delay
+            setTimeout(() => {
+                this._isRestoring = false;
+            }, 100);
         }
 
         setPlaybackRate(rate) {
+            // Set flag to prevent restoration during our own changes
+            this._isRestoring = true;
             this.media.playbackRate = rate;
             config.set('playbackRate', rate);
             showToast(`Speed: ${rate.toFixed(2)}x`);
+            // Reset flag after a short delay
+            setTimeout(() => {
+                this._isRestoring = false;
+            }, 100);
         }
 
         adjustFilter(filter, delta) {
@@ -416,80 +492,90 @@
         const controller = new MediaController(mediaElement);
         controllers.set(mediaElement, controller);
 
-        mediaElement.addEventListener('mouseenter', () => activeController = controller);
-        mediaElement.addEventListener('play', () => activeController = controller);
+        mediaElement.addEventListener('mouseenter', () => {
+            activeController = controller;
+            console.log('[Controller] Activated via mouseenter');
+        });
+        mediaElement.addEventListener('play', () => {
+            activeController = controller;
+            console.log('[Controller] Activated via play event');
+        });
+        mediaElement.addEventListener('focus', () => {
+            activeController = controller;
+            console.log('[Controller] Activated via focus');
+        });
     }
 
     // --- Hotkey Handler ---
-    window.addEventListener('keydown', (e) => {
-        // Check if hotkeys are disabled or if typing in an editable field
-        const hotkeyDisabled = !config.get('enableHotkeys');
-        const inEditableField = isEditable(e.target);
-        
-        if (hotkeyDisabled || inEditableField) {
-            if (window._debugHotkeys_) {
-                console.log('[Hotkey] Skipped:', { hotkeyDisabled, inEditableField });
+
+    function keydownEvent(event) {
+        // Check if hotkeys are enabled and not in an editable field
+        if (!config.get('enableHotkeys') || isEditable(event.target)) return;
+
+        // Auto-activate controller if none is active
+        if (!activeController) {
+            const mediaElements = document.querySelectorAll('video, audio');
+            for (const mediaElement of mediaElements) {
+                if (controllers.has(mediaElement)) {
+                    activeController = controllers.get(mediaElement);
+                    if (window._debugHotkeys_) {
+                        console.log('[Hotkey] Auto-activated media element');
+                    }
+                    break;
+                }
             }
-            return;
         }
 
-        // Build modifier key string in correct order: ctrl -> shift -> alt
-        let key = e.key.toLowerCase();
+        if (!activeController) return;
+
+        // Build hotkey string
         const modifiers = [];
-        if (e.ctrlKey || e.metaKey) modifiers.push('ctrl');
-        if (e.shiftKey) modifiers.push('shift');
-        if (e.altKey) modifiers.push('alt');
+        if (event.ctrlKey) modifiers.push('ctrl');
+        if (event.shiftKey) modifiers.push('shift');
+        if (event.altKey) modifiers.push('alt');
+        if (event.metaKey) modifiers.push('meta');
+
+        let key = event.key.toLowerCase();
         
-        if (modifiers.length > 0) {
-            key = modifiers.join('+') + '+' + key;
-        }
+        // Normalize key names
+        if (key === ' ') key = 'space';
+        
+        const hotkeyStr = modifiers.length > 0 ? `${modifiers.join('+')}+${key}` : key;
 
-        const hotkey = config.defaultSettings.hotkeys[key];
-
-        // Enhanced debug logging
         if (window._debugHotkeys_) {
-            console.log('[Hotkey Debug]', {
-                pressed: key,
-                rawKey: e.key,
-                keyCode: e.keyCode,
-                found: !!hotkey,
-                action: hotkey?.action,
-                activeController: !!activeController,
-                ctrl: e.ctrlKey,
-                shift: e.shiftKey,
-                alt: e.altKey,
-                target: e.target.tagName,
-                defaultPrevented: e.defaultPrevented
-            });
+            console.log(`[Hotkey] Detected: ${hotkeyStr}`);
         }
 
-        if (hotkey && activeController) {
-            e.preventDefault();
-            e.stopPropagation();
+        // Look up action in config
+        const actionDef = config.get('hotkeys')[hotkeyStr];
+        
+        if (actionDef) {
+            const { action, value, filter, axis } = actionDef;
             
-            if (window._debugHotkeys_) {
-                console.log('[Hotkey] Executing action:', hotkey.action);
-            }
-            
-            const { action, value, filter, axis } = hotkey;
             if (typeof activeController[action] === 'function') {
-                // Handle different action types with correct parameters
-                if (action === 'adjustFilter') {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Dispatch action with appropriate arguments
+                if (filter !== undefined) {
                     activeController[action](filter, value);
-                } else if (action === 'toggleMirror') {
+                } else if (axis !== undefined) {
                     activeController[action](axis);
                 } else if (value !== undefined) {
                     activeController[action](value);
                 } else {
                     activeController[action]();
                 }
-            } else if (window._debugHotkeys_) {
-                console.error('[Hotkey] Action not found:', action);
+                
+                if (window._debugHotkeys_) {
+                    console.log(`[Hotkey] Triggered action: ${action}`);
+                }
             }
-        } else if (window._debugHotkeys_ && hotkey && !activeController) {
-            console.warn('[Hotkey] No active controller! Hover over or play the video first.');
         }
-    }, true);
+    }
+
+    document.addEventListener('keydown', keydownEvent, true);
+    window.addEventListener('keydown', keydownEvent, true);
 
     // --- Media Detection ---
     function findMediaElements() {
@@ -540,3 +626,4 @@
     console.log('💡 Tip: Set window._debugHotkeys_ = true to enable hotkey debugging');
     console.log('🎬 Videos will auto-activate after 1 second, or hover/play to activate');
 })();
+

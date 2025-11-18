@@ -77,7 +77,6 @@ Here is the complete list of available shortcuts.
 
 | Hotkey | Function |
 | :--- | :--- |
-| `Space` | Toggle Play/Pause |
 | `→` | Seek Forward 5 seconds |
 | `←` | Seek Backward 5 seconds |
 | `Ctrl` + `→` | Seek Forward 30 seconds |
