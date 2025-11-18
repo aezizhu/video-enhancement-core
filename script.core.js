@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Video Enhancement Core
 // @name:en      Video Enhancement Core
-// @version      1.6.3
+// @version      1.6.4
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu (github.com/aezizhu)
 // @match        *://*/*
@@ -538,7 +538,8 @@
         let key = event.key.toLowerCase();
         
         // Normalize key names
-        if (key === ' ') key = 'space';
+        if (event.code === 'Space' || event.keyCode === 32) key = 'space';
+        if (key === ' ' || key === 'spacebar') key = 'space';
         
         const hotkeyStr = modifiers.length > 0 ? `${modifiers.join('+')}+${key}` : key;
 
@@ -555,6 +556,7 @@
             if (typeof activeController[action] === 'function') {
                 event.preventDefault();
                 event.stopPropagation();
+                event.stopImmediatePropagation();
                 
                 // Dispatch action with appropriate arguments
                 if (filter !== undefined) {
