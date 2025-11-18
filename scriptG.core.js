@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Simple Video Enhancement
 // @namespace    https://github.com/aezizhu/video-enhancement-core
-// @version      1.6.4
+// @version      1.6.5
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu
 // @match        *://*/*
@@ -505,6 +505,12 @@
         const controller = new MediaController(mediaElement);
         controllers.set(mediaElement, controller);
 
+        // Auto-set active controller if it's the first one found
+        if (!activeController) {
+            activeController = controller;
+            console.log('[Controller] Auto-activated first detected media');
+        }
+
         mediaElement.addEventListener('mouseenter', () => {
             activeController = controller;
             console.log('[Controller] Activated via mouseenter');
@@ -518,6 +524,29 @@
             console.log('[Controller] Activated via focus');
         });
     }
+
+    // --- Robust Detection (Prototype Hijacking) ---
+    // Inspired by h5player, this ensures we catch videos even in Shadow DOM
+    (function hijackPrototype() {
+        const _play = HTMLMediaElement.prototype.play;
+        const _pause = HTMLMediaElement.prototype.pause;
+        const _load = HTMLMediaElement.prototype.load;
+
+        HTMLMediaElement.prototype.play = function () {
+            initializeMedia(this);
+            return _play.apply(this, arguments);
+        };
+
+        HTMLMediaElement.prototype.pause = function () {
+            initializeMedia(this);
+            return _pause.apply(this, arguments);
+        };
+
+        HTMLMediaElement.prototype.load = function () {
+            initializeMedia(this);
+            return _load.apply(this, arguments);
+        };
+    })();
  
     // --- Hotkey Handler ---
 
