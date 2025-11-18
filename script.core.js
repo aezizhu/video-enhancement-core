@@ -607,6 +607,44 @@
 
     document.addEventListener('keydown', keydownEvent, true);
     window.addEventListener('keydown', keydownEvent, true);
+    
+    function keyupEvent(event) {
+        // Check if hotkeys are enabled and not in an editable field
+        if (!config.get('enableHotkeys') || isEditable(event.target)) return;
+
+        // Build hotkey string (same logic as keydown)
+        const modifiers = [];
+        if (event.ctrlKey) modifiers.push('ctrl');
+        if (event.shiftKey) modifiers.push('shift');
+        if (event.altKey) modifiers.push('alt');
+        if (event.metaKey) modifiers.push('meta');
+
+        let key = event.key.toLowerCase();
+        
+        // Normalize key names
+        if (event.code === 'Space' || event.keyCode === 32) key = 'space';
+        if (key === ' ' || key === 'spacebar') key = 'space';
+        
+        const hotkeyStr = modifiers.length > 0 ? `${modifiers.join('+')}+${key}` : key;
+
+        // Look up action in config
+        const actionDef = config.get('hotkeys')[hotkeyStr];
+        
+        if (actionDef) {
+            // If it's a handled hotkey, suppress the keyup event
+            // This prevents websites (like YouTube) from triggering their own action on keyup
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            
+            if (window._debugHotkeys_) {
+                console.log(`[Hotkey] Suppressed keyup for: ${hotkeyStr}`);
+            }
+        }
+    }
+
+    document.addEventListener('keyup', keyupEvent, true);
+    window.addEventListener('keyup', keyupEvent, true);
 
     // --- Media Detection ---
     function findMediaElements() {

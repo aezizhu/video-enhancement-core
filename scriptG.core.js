@@ -14,8 +14,8 @@
 // @run-at       document-start
 // @license      CC BY-NC-ND 4.0
 // ==/UserScript==
- 
- 
+
+
 /*
  * Copyright (c) 2025, aezi zhu (github.com/aezizhu)
  * This script is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
@@ -23,7 +23,7 @@
  * Any other use, including redistribution or commercial use, requires explicit permission from the author.
  * For full license details, see the LICENSE file or visit: https://creativecommons.org/licenses/by-nc-nd/4.0/
  */
- 
+
 (function () {
     'use strict';
 
@@ -35,7 +35,7 @@
     // --------------------------------------------------------------------------------
     // 1. Configuration Management (Simplified)
     // --------------------------------------------------------------------------------
- 
+
     const config = {
         prefix: '_h5player_core_',
         defaultSettings: {
@@ -106,26 +106,26 @@
                 'shift+d': { action: 'download', desc: 'Download Media' },
             }
         },
-        
+
         get(key) {
             if (typeof GM_getValue === 'undefined') return this.defaultSettings[key];
             return GM_getValue(this.prefix + key, this.defaultSettings[key]);
         },
- 
+
         set(key, value) {
             if (typeof GM_setValue === 'undefined') return;
             GM_setValue(this.prefix + key, value);
         }
     };
- 
+
     // --------------------------------------------------------------------------------
     // 2. Core Utilities
     // --------------------------------------------------------------------------------
- 
+
     function isEditable(target) {
         return target.isContentEditable || target.matches('input, select, textarea');
     }
- 
+
     function showToast(message, duration = 2000) {
         if (!document.body) return; // Ensure body exists
         let toast = document.querySelector('.enhancement-core-toast');
@@ -153,11 +153,11 @@
         toast.style.opacity = '1';
         setTimeout(() => { toast.style.opacity = '0'; }, duration);
     }
- 
+
     // --------------------------------------------------------------------------------
     // 3. Media Element Controller
     // --------------------------------------------------------------------------------
- 
+
     class MediaController {
         constructor(mediaElement) {
             this.media = mediaElement;
@@ -167,13 +167,13 @@
             this._isRestoring = false;
             this.init();
         }
- 
+
         init() {
             // Restore last known settings if available
             this.media.playbackRate = config.get('playbackRate');
             this.media.volume = config.get('volume');
             this.applyStyles();
-            
+
             // Set up event listeners to restore playback rate when video loads
             this.setupPlaybackRateRestoration();
         }
@@ -181,15 +181,15 @@
         restorePlaybackRate() {
             // Skip if already restoring to prevent infinite loops
             if (this._isRestoring) return;
-            
+
             const savedRate = config.get('playbackRate');
             const currentRate = this.media.playbackRate;
-            
+
             // Only restore if rate differs from saved value
             if (Math.abs(currentRate - savedRate) > 0.01) {
                 this._isRestoring = true;
                 this.media.playbackRate = savedRate;
-                
+
                 if (window._debugHotkeys_) {
                     console.log('[restorePlaybackRate]', {
                         currentRate: currentRate,
@@ -197,7 +197,7 @@
                         restored: true
                     });
                 }
-                
+
                 // Reset flag after a short delay
                 setTimeout(() => {
                     this._isRestoring = false;
@@ -220,7 +220,7 @@
             this.media.addEventListener('loadedmetadata', debouncedRestore);
             this.media.addEventListener('canplay', debouncedRestore);
             this.media.addEventListener('play', debouncedRestore);
-            
+
             // Optionally listen to ratechange to detect external modifications
             // But only restore if it wasn't changed by us
             this.media.addEventListener('ratechange', () => {
@@ -229,37 +229,37 @@
                 }
             });
         }
- 
+
         applyStyles() {
             const filterStr = `brightness(${this.filters.brightness}) contrast(${this.filters.contrast}) saturate(${this.filters.saturate}) hue-rotate(${this.filters.hue}deg) blur(${this.filters.blur}px)`;
             const transformStr = `rotate(${this.transform.rotate}deg) scaleX(${this.transform.scaleX}) scaleY(${this.transform.scaleY}) translateX(${this.transform.translateX}px) translateY(${this.transform.translateY}px)`;
             this.media.style.filter = filterStr;
             this.media.style.transform = transformStr;
         }
- 
+
         // --- Actions ---
         togglePlay() {
             this.media.paused ? this.media.play() : this.media.pause();
         }
- 
+
         seek(seconds) {
             this.media.currentTime += seconds;
             showToast(`Seek ${seconds > 0 ? '+' : ''}${seconds}s`);
         }
- 
+
         frame(direction) {
             if (this.media.paused) {
                 this.media.currentTime += direction * (1 / 60); // Assuming 60fps
             }
         }
- 
+
         adjustVolume(delta) {
             let newVolume = Math.max(0, Math.min(2, this.media.volume + delta)); // Allow up to 200%
             this.media.volume = newVolume;
             config.set('volume', newVolume);
             showToast(`Volume: ${Math.round(newVolume * 100)}%`);
         }
- 
+
         adjustPlaybackRate(delta) {
             if (window._debugHotkeys_) {
                 console.log('[adjustPlaybackRate]', {
@@ -280,7 +280,7 @@
                 this._isRestoring = false;
             }, 100);
         }
- 
+
         setPlaybackRate(rate) {
             // Set flag to prevent restoration during our own changes
             this._isRestoring = true;
@@ -292,7 +292,7 @@
                 this._isRestoring = false;
             }, 100);
         }
- 
+
         adjustFilter(filter, delta) {
             this.filters[filter] += delta;
             if (filter === 'blur') this.filters[filter] = Math.max(0, this.filters[filter]);
@@ -300,13 +300,13 @@
             this.applyStyles();
             showToast(`${filter.charAt(0).toUpperCase() + filter.slice(1)}: ${this.filters[filter].toFixed(1)}`);
         }
-        
+
         toggleRotation() {
             this.transform.rotate = (this.transform.rotate + 90) % 360;
             this.applyStyles();
             showToast(`Rotation: ${this.transform.rotate}°`);
         }
- 
+
         toggleMirror(axis) {
             if (axis === 'X') this.transform.scaleX *= -1;
             if (axis === 'Y') this.transform.scaleY *= -1;
@@ -315,7 +315,7 @@
             const state = (axis === 'X' ? this.transform.scaleX : this.transform.scaleY) < 0 ? 'ON' : 'OFF';
             showToast(`${direction} Mirror: ${state}`);
         }
- 
+
         resetFilterAndTransform() {
             // Reset all filters to default values
             this.filters = {
@@ -336,7 +336,7 @@
             this.applyStyles();
             showToast('✨ All picture adjustments reset');
         }
- 
+
         toggleFullScreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => console.error(err));
@@ -344,7 +344,7 @@
                 document.exitFullscreen();
             }
         }
- 
+
         toggleWebFullScreen() {
             // Site-specific web fullscreen selectors (preferred method)
             const siteSelectors = {
@@ -354,7 +354,7 @@
                 'douyin.com': '.xgplayer-page-full-screen',
                 'live.douyin.com': '.xgplayer-page-full-screen'
             };
- 
+
             // Try site-specific button first
             const hostname = window.location.hostname;
             for (const [domain, selector] of Object.entries(siteSelectors)) {
@@ -370,7 +370,7 @@
                     }
                 }
             }
- 
+
             // Fallback: CSS-based web fullscreen
             if (!document.getElementById('web-fullscreen-style')) {
                 const style = document.createElement('style');
@@ -391,9 +391,9 @@
                 `;
                 document.head.appendChild(style);
             }
- 
+
             const isEntering = !this.media.classList.contains('web-fullscreen');
-            
+
             if (isEntering) {
                 // Remove web-fullscreen from other videos
                 document.querySelectorAll('.web-fullscreen').forEach(el => {
@@ -401,7 +401,7 @@
                         el.classList.remove('web-fullscreen');
                     }
                 });
-                
+
                 this.media.classList.add('web-fullscreen');
                 showToast('🖥️ Web Fullscreen: ON');
             } else {
@@ -409,7 +409,7 @@
                 showToast('🖥️ Web Fullscreen: OFF');
             }
         }
- 
+
         exitWebFullScreen() {
             // Exit web fullscreen for all videos
             const webFullscreenVideos = document.querySelectorAll('.web-fullscreen');
@@ -420,7 +420,7 @@
             }
             return false;
         }
- 
+
         togglePictureInPicture() {
             if (document.pictureInPictureElement === this.media) {
                 document.exitPictureInPicture().catch(err => console.error('PiP exit failed:', err));
@@ -430,7 +430,7 @@
                 showToast('Picture-in-Picture is not supported for this media.');
             }
         }
- 
+
         capture() {
             if (!this.media || this.media.tagName.toLowerCase() !== 'video') {
                 showToast('Capture is only available for video elements.');
@@ -464,7 +464,7 @@
                 showToast('Screenshot saved!');
             });
         }
- 
+
         download() {
             if (this.media.src) {
                 showToast('Starting download...');
@@ -485,14 +485,14 @@
             }
         }
     }
- 
+
     // --------------------------------------------------------------------------------
     // 4. Main Script Logic
     // --------------------------------------------------------------------------------
- 
+
     let activeController = null;
     const controllers = new WeakMap();
- 
+
     function initializeMedia(mediaElement) {
         if (controllers.has(mediaElement)) return;
 
@@ -547,7 +547,7 @@
             return _load.apply(this, arguments);
         };
     })();
- 
+
     // --- Hotkey Handler ---
 
     function keydownEvent(event) {
@@ -578,11 +578,11 @@
         if (event.metaKey) modifiers.push('meta');
 
         let key = event.key.toLowerCase();
-        
+
         // Normalize key names
         if (event.code === 'Space' || event.keyCode === 32) key = 'space';
         if (key === ' ' || key === 'spacebar') key = 'space';
-        
+
         const hotkeyStr = modifiers.length > 0 ? `${modifiers.join('+')}+${key}` : key;
 
         if (window._debugHotkeys_) {
@@ -591,15 +591,15 @@
 
         // Look up action in config
         const actionDef = config.get('hotkeys')[hotkeyStr];
-        
+
         if (actionDef) {
             const { action, value, filter, axis } = actionDef;
-            
+
             if (typeof activeController[action] === 'function') {
                 event.preventDefault();
                 event.stopPropagation();
                 event.stopImmediatePropagation();
-                
+
                 // Dispatch action with appropriate arguments
                 if (filter !== undefined) {
                     activeController[action](filter, value);
@@ -610,7 +610,7 @@
                 } else {
                     activeController[action]();
                 }
-                
+
                 if (window._debugHotkeys_) {
                     console.log(`[Hotkey] Triggered action: ${action}`);
                 }
@@ -620,12 +620,50 @@
 
     document.addEventListener('keydown', keydownEvent, true);
     window.addEventListener('keydown', keydownEvent, true);
- 
+
+    function keyupEvent(event) {
+        // Check if hotkeys are enabled and not in an editable field
+        if (!config.get('enableHotkeys') || isEditable(event.target)) return;
+
+        // Build hotkey string (same logic as keydown)
+        const modifiers = [];
+        if (event.ctrlKey) modifiers.push('ctrl');
+        if (event.shiftKey) modifiers.push('shift');
+        if (event.altKey) modifiers.push('alt');
+        if (event.metaKey) modifiers.push('meta');
+
+        let key = event.key.toLowerCase();
+
+        // Normalize key names
+        if (event.code === 'Space' || event.keyCode === 32) key = 'space';
+        if (key === ' ' || key === 'spacebar') key = 'space';
+
+        const hotkeyStr = modifiers.length > 0 ? `${modifiers.join('+')}+${key}` : key;
+
+        // Look up action in config
+        const actionDef = config.get('hotkeys')[hotkeyStr];
+
+        if (actionDef) {
+            // If it's a handled hotkey, suppress the keyup event
+            // This prevents websites (like YouTube) from triggering their own action on keyup
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+
+            if (window._debugHotkeys_) {
+                console.log(`[Hotkey] Suppressed keyup for: ${hotkeyStr}`);
+            }
+        }
+    }
+
+    document.addEventListener('keyup', keyupEvent, true);
+    window.addEventListener('keyup', keyupEvent, true);
+
     // --- Media Detection ---
     function findMediaElements() {
         document.querySelectorAll('video, audio').forEach(initializeMedia);
     }
- 
+
     // Use MutationObserver to detect dynamically added media
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
@@ -642,16 +680,16 @@
             }
         }
     });
- 
+
     // Start observing
     observer.observe(document.documentElement, {
         childList: true,
         subtree: true
     });
- 
+
     // Initial scan
     findMediaElements();
-    
+
     // Auto-activate the first video after a short delay
     setTimeout(() => {
         if (!activeController) {
@@ -665,7 +703,7 @@
             }
         }
     }, 1000);
-    
+
     console.log('Video Enhancement Core loaded. Copyright (c) 2025, aezi zhu (github.com/aezizhu)');
     console.log('💡 Tip: Set window._debugHotkeys_ = true to enable hotkey debugging');
     console.log('🎬 Videos will auto-activate after 1 second, or hover/play to activate');
