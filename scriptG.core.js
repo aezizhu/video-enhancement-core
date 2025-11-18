@@ -340,20 +340,39 @@
         }
  
         togglePictureInPicture() {
-            if (document.pictureInPictureElement) {
-                document.exitPictureInPicture();
+            if (document.pictureInPictureElement === this.media) {
+                document.exitPictureInPicture().catch(err => console.error('PiP exit failed:', err));
             } else if (this.media.requestPictureInPicture) {
-                this.media.requestPictureInPicture();
+                this.media.requestPictureInPicture().catch(err => console.error('PiP request failed:', err));
+            } else {
+                showToast('Picture-in-Picture is not supported for this media.');
             }
         }
  
         capture() {
+            if (!this.media || this.media.tagName.toLowerCase() !== 'video') {
+                showToast('Capture is only available for video elements.');
+                return;
+            }
+
+            const width = this.media.videoWidth;
+            const height = this.media.videoHeight;
+
+            if (!width || !height) {
+                showToast('No video frame available to capture.');
+                return;
+            }
+
             const canvas = document.createElement('canvas');
-            canvas.width = this.media.videoWidth;
-            canvas.height = this.media.videoHeight;
+            canvas.width = width;
+            canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(this.media, 0, 0, canvas.width, canvas.height);
             canvas.toBlob(blob => {
+                if (!blob) {
+                    showToast('Failed to capture frame.');
+                    return;
+                }
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -408,8 +427,9 @@
         mediaElement.addEventListener('play', () => activeController = controller);
     }
  
-    // --- Hotkey Handler ---
-    window.addEventListener('keydown', (e) => {
+    // --- Hotkey Handler (based on original h5player logic) ---
+    const hotkeyListenerTarget = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
+    hotkeyListenerTarget.addEventListener('keydown', (e) => {
         // Check if hotkeys are disabled or if typing in an editable field
         const hotkeyDisabled = !config.get('enableHotkeys');
         const inEditableField = isEditable(e.target);
@@ -420,68 +440,92 @@
             }
             return;
         }
- 
-        // Build modifier key string in correct order: ctrl -> shift -> alt
-        let key = e.key.toLowerCase();
-        const modifiers = [];
-        if (e.ctrlKey || e.metaKey) modifiers.push('ctrl');
-        if (e.shiftKey) modifiers.push('shift');
-        if (e.altKey) modifiers.push('alt');
+
+        // Use keyCode for reliable detection (like original h5player)
+        const keyCode = e.keyCode;
+        const key = e.key ? e.key.toLowerCase() : '';
         
-        if (modifiers.length > 0) {
-            key = modifiers.join('+') + '+' + key;
-        }
- 
-        const hotkey = config.defaultSettings.hotkeys[key];
- 
-        // Enhanced debug logging
-        if (window._debugHotkeys_) {
-            console.log('[Hotkey Debug]', {
-                pressed: key,
-                rawKey: e.key,
-                keyCode: e.keyCode,
-                found: !!hotkey,
-                action: hotkey?.action,
-                activeController: !!activeController,
-                ctrl: e.ctrlKey,
-                shift: e.shiftKey,
-                alt: e.altKey,
-                target: e.target.tagName,
-                defaultPrevented: e.defaultPrevented
-            });
-        }
- 
-        // If hotkey is recognized, prevent default browser behavior immediately
-        if (hotkey) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // If no active controller, try to find and auto-activate one
+        // Handle spacebar (keyCode 32) for play/pause - BEFORE checking activeController
+        // This ensures spacebar works even if no controller is active yet
+        if (keyCode === 32 && !e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+            // Try to auto-activate first available media element if needed
             if (!activeController) {
                 const mediaElements = document.querySelectorAll('video, audio');
                 for (const mediaElement of mediaElements) {
                     if (controllers.has(mediaElement)) {
                         activeController = controllers.get(mediaElement);
                         if (window._debugHotkeys_) {
-                            console.log('[Hotkey] Auto-activated media element');
+                            console.log('[Hotkey] Auto-activated media element for spacebar');
                         }
                         break;
                     }
                 }
-                
-                // If still no controller after search, warn and return
-                if (!activeController) {
+            }
+            
+            if (activeController) {
+                activeController.togglePlay();
+                e.preventDefault();
+                e.stopPropagation();
+                if (window._debugHotkeys_) {
+                    console.log('[Hotkey] Spacebar: togglePlay executed');
+                }
+            } else if (window._debugHotkeys_) {
+                console.warn('[Hotkey] Spacebar pressed but no controller available');
+            }
+            return;
+        }
+        
+        // Ensure active controller exists for other hotkeys
+        if (!activeController) {
+            // Try to auto-activate first available media element
+            const mediaElements = document.querySelectorAll('video, audio');
+            for (const mediaElement of mediaElements) {
+                if (controllers.has(mediaElement)) {
+                    activeController = controllers.get(mediaElement);
                     if (window._debugHotkeys_) {
-                        console.warn('[Hotkey] No active controller! No media elements found.');
+                        console.log('[Hotkey] Auto-activated media element on keydown');
                     }
-                    return;
+                    break;
                 }
             }
-            
+        }
+
+        if (!activeController) {
             if (window._debugHotkeys_) {
-                console.log('[Hotkey] Executing action:', hotkey.action);
+                console.warn('[Hotkey] No active controller available');
             }
-            
+            return;
+        }
+        
+        // Build hotkey string with modifiers
+        let hotkeyStr = '';
+        const modifiers = [];
+        if (e.ctrlKey || e.metaKey) modifiers.push('ctrl');
+        if (e.shiftKey) modifiers.push('shift');
+        if (e.altKey) modifiers.push('alt');
+        
+        if (modifiers.length > 0) {
+            hotkeyStr = modifiers.join('+') + '+' + key;
+        } else {
+            hotkeyStr = key;
+        }
+
+        const hotkey = config.defaultSettings.hotkeys[hotkeyStr];
+
+        // Enhanced debug logging
+        if (window._debugHotkeys_) {
+            console.log('[Hotkey Debug]', {
+                pressed: hotkeyStr,
+                rawKey: e.key,
+                keyCode: keyCode,
+                found: !!hotkey,
+                action: hotkey?.action,
+                activeController: !!activeController
+            });
+        }
+
+        // Execute hotkey action
+        if (hotkey) {
             const { action, value, filter, axis } = hotkey;
             if (typeof activeController[action] === 'function') {
                 // Handle different action types with correct parameters
@@ -494,6 +538,9 @@
                 } else {
                     activeController[action]();
                 }
+                // Prevent default after successful execution
+                e.preventDefault();
+                e.stopPropagation();
             } else if (window._debugHotkeys_) {
                 console.error('[Hotkey] Action not found:', action);
             }
