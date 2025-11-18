@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Video Enhancement Core
 // @name:en      Video Enhancement Core
-// @version      1.6.1
+// @version      1.6.3
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu (github.com/aezizhu)
 // @match        *://*/*
@@ -75,7 +75,7 @@
                 '3': { action: 'setPlaybackRate', value: 3.0, desc: 'Set Speed to 3x' },
                 '4': { action: 'setPlaybackRate', value: 4.0, desc: 'Set Speed to 4x' },
                 // Playback Control
-                // Spacebar removed - websites handle it natively
+                'space': { action: 'togglePlay', desc: 'Toggle Play/Pause' },
                 'arrowright': { action: 'seek', value: 5, desc: 'Seek Forward 5s' },
                 'arrowleft': { action: 'seek', value: -5, desc: 'Seek Backward 5s' },
                 'ctrl+arrowright': { action: 'seek', value: 30, desc: 'Seek Forward 30s' },
