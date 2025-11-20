@@ -129,7 +129,41 @@
     // --------------------------------------------------------------------------------
 
     function isEditable(target) {
-        return target.isContentEditable || target.matches('input, select, textarea');
+        // 1. Get the true active element, penetrating Shadow DOMs (Critical for Reddit & modern sites)
+        let activeEl = document.activeElement;
+        while (activeEl && activeEl.shadowRoot && activeEl.shadowRoot.activeElement) {
+            activeEl = activeEl.shadowRoot.activeElement;
+        }
+
+        // Check the true active element
+        if (activeEl && activeEl !== document.body && activeEl !== document.documentElement) {
+            if (activeEl.isContentEditable) return true;
+            if (activeEl.tagName && ['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName)) return true;
+            const role = activeEl.getAttribute('role');
+            if (role && ['textbox', 'searchbox', 'combobox'].includes(role)) return true;
+        }
+        
+        // 2. Fallback: Check the event target
+        if (!target || !target.nodeType || target.nodeType !== 1) return false;
+        
+        // Check if element itself is editable
+        if (target.isContentEditable) return true;
+        if (target.tagName && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return true;
+        
+        const targetRole = target.getAttribute('role');
+        if (targetRole && ['textbox', 'searchbox', 'combobox'].includes(targetRole)) return true;
+        
+        // Check if target is inside an editable element
+        let element = target.parentElement;
+        while (element && element !== document.body) {
+            if (element.isContentEditable) return true;
+            if (element.tagName && ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName)) return true;
+            const role = element.getAttribute('role');
+            if (role && ['textbox', 'searchbox', 'combobox'].includes(role)) return true;
+            element = element.parentElement;
+        }
+        
+        return false;
     }
 
     function showToast(message, duration = 2000) {
@@ -538,8 +572,11 @@
     // --- Hotkey Handler ---
 
     function keydownEvent(event) {
-        // Check if hotkeys are enabled and not in an editable field
-        if (!config.get('enableHotkeys') || isEditable(event.target)) return;
+        // Check if hotkeys are enabled
+        if (!config.get('enableHotkeys')) return;
+        
+        // CRITICAL: Always allow typing in editable fields
+        if (isEditable(event.target)) return;
 
         // Auto-activate controller if none is active
         if (!activeController) {
@@ -609,8 +646,11 @@
     window.addEventListener('keydown', keydownEvent, true);
     
     function keyupEvent(event) {
-        // Check if hotkeys are enabled and not in an editable field
-        if (!config.get('enableHotkeys') || isEditable(event.target)) return;
+        // Check if hotkeys are enabled
+        if (!config.get('enableHotkeys')) return;
+        
+        // CRITICAL: Always allow typing in editable fields
+        if (isEditable(event.target)) return;
 
         // Build hotkey string (same logic as keydown)
         const modifiers = [];
