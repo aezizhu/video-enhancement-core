@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         Video Enhancement Core
 // @name:en      Video Enhancement Core
-// @version      1.6.5
+// @version      1.6.7
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu (github.com/aezizhu)
 // @match        *://*/*
@@ -355,12 +355,14 @@
             if (filter === 'blur') this.filters[filter] = Math.max(0, this.filters[filter]);
             else if (filter !== 'hue') this.filters[filter] = Math.max(0, this.filters[filter]);
             this.applyStyles();
+            config.set('filters', this.filters);
             showToast(`${filter.charAt(0).toUpperCase() + filter.slice(1)}: ${this.filters[filter].toFixed(1)}`);
         }
         
         toggleRotation() {
             this.transform.rotate = (this.transform.rotate + 90) % 360;
             this.applyStyles();
+            config.set('transform', this.transform);
             showToast(`Rotation: ${this.transform.rotate}°`);
         }
 
@@ -368,6 +370,7 @@
             if (axis === 'X') this.transform.scaleX *= -1;
             if (axis === 'Y') this.transform.scaleY *= -1;
             this.applyStyles();
+            config.set('transform', this.transform);
             const direction = axis === 'X' ? 'Horizontal' : 'Vertical';
             const state = (axis === 'X' ? this.transform.scaleX : this.transform.scaleY) < 0 ? 'ON' : 'OFF';
             showToast(`${direction} Mirror: ${state}`);
@@ -391,6 +394,8 @@
                 translateY: 0,
             };
             this.applyStyles();
+            config.set('filters', this.filters);
+            config.set('transform', this.transform);
             showToast('✨ All picture adjustments reset');
         }
 
@@ -479,20 +484,39 @@
         }
 
         togglePictureInPicture() {
-            if (document.pictureInPictureElement) {
-                document.exitPictureInPicture();
+            if (document.pictureInPictureElement === this.media) {
+                document.exitPictureInPicture().catch(err => console.error('PiP exit failed:', err));
             } else if (this.media.requestPictureInPicture) {
-                this.media.requestPictureInPicture();
+                this.media.requestPictureInPicture().catch(err => console.error('PiP request failed:', err));
+            } else {
+                showToast('Picture-in-Picture is not supported for this media.');
             }
         }
 
         capture() {
+            if (!this.media || this.media.tagName.toLowerCase() !== 'video') {
+                showToast('Capture is only available for video elements.');
+                return;
+            }
+
+            const width = this.media.videoWidth;
+            const height = this.media.videoHeight;
+
+            if (!width || !height) {
+                showToast('No video frame available to capture.');
+                return;
+            }
+
             const canvas = document.createElement('canvas');
-            canvas.width = this.media.videoWidth;
-            canvas.height = this.media.videoHeight;
+            canvas.width = width;
+            canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(this.media, 0, 0, canvas.width, canvas.height);
             canvas.toBlob(blob => {
+                if (!blob) {
+                    showToast('Failed to capture frame.');
+                    return;
+                }
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -534,9 +558,11 @@
     function initializeMedia(mediaElement) {
         if (controllers.has(mediaElement)) return;
 
-        // Simple check to avoid enhancing tiny or ad-like videos
-        if (mediaElement.videoWidth < 200 || mediaElement.videoHeight < 150) {
-            if (mediaElement.duration < 30) return; // Ignore short ad clips
+        // Simple check to avoid enhancing tiny or ad-like videos (only for video elements)
+        if (mediaElement.tagName === 'VIDEO') {
+            if (mediaElement.videoWidth < 200 || mediaElement.videoHeight < 150) {
+                if (mediaElement.duration < 30) return; // Ignore short ad clips
+            }
         }
 
         console.log('Enhancement Core: Initializing new media element', mediaElement);

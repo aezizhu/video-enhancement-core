@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.6.7] - 2025-11-21
+
+### 🔥 Fixed
+- **Baidu Netdisk Video Rotation Issue**
+  - Fixed video appearing rotated/tilted on Baidu Netdisk (百度网盘)
+  - Only apply CSS transforms when values differ from defaults
+  - Prevents overriding site-native transforms while maintaining full functionality
+
+- **Audio Element Compatibility**
+  - Fixed crash when script encounters `<audio>` elements
+  - Screenshot function now properly checks for video elements before attempting capture
+  - Media filtering logic now correctly distinguishes between video and audio elements
+
+### 🎯 Changes
+- Enhanced `applyStyles()` to conditionally apply filters and transforms
+- Improved media detection to handle both video and audio elements safely
+- Better error messages for unsupported operations on audio elements
+- **Robustness Improvements**:
+  - Backported safer PiP and Screenshot handling from scriptG to main script
+- **Persistence**:
+  - Picture adjustments (brightness, contrast, rotation, etc.) now persist across page reloads (as documented)
+
+---
+
 ## [1.6.6] - 2025-11-20
 
 ### 🔥 Fixed

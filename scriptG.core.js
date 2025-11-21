@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Simple Video Enhancement
 // @namespace    https://github.com/aezizhu/video-enhancement-core
-// @version      1.6.5
+// @version      1.6.7
 // @description  A lightweight video enhancement script focusing on core features: speed, volume, picture, and playback control.
 // @author       aezi zhu
 // @match        *://*/*
@@ -349,12 +349,14 @@
             if (filter === 'blur') this.filters[filter] = Math.max(0, this.filters[filter]);
             else if (filter !== 'hue') this.filters[filter] = Math.max(0, this.filters[filter]);
             this.applyStyles();
+            config.set('filters', this.filters);
             showToast(`${filter.charAt(0).toUpperCase() + filter.slice(1)}: ${this.filters[filter].toFixed(1)}`);
         }
-
+        
         toggleRotation() {
             this.transform.rotate = (this.transform.rotate + 90) % 360;
             this.applyStyles();
+            config.set('transform', this.transform);
             showToast(`Rotation: ${this.transform.rotate}°`);
         }
 
@@ -362,6 +364,7 @@
             if (axis === 'X') this.transform.scaleX *= -1;
             if (axis === 'Y') this.transform.scaleY *= -1;
             this.applyStyles();
+            config.set('transform', this.transform);
             const direction = axis === 'X' ? 'Horizontal' : 'Vertical';
             const state = (axis === 'X' ? this.transform.scaleX : this.transform.scaleY) < 0 ? 'ON' : 'OFF';
             showToast(`${direction} Mirror: ${state}`);
@@ -385,6 +388,8 @@
                 translateY: 0,
             };
             this.applyStyles();
+            config.set('filters', this.filters);
+            config.set('transform', this.transform);
             showToast('✨ All picture adjustments reset');
         }
 
@@ -547,9 +552,11 @@
     function initializeMedia(mediaElement) {
         if (controllers.has(mediaElement)) return;
 
-        // Simple check to avoid enhancing tiny or ad-like videos
-        if (mediaElement.videoWidth < 200 || mediaElement.videoHeight < 150) {
-            if (mediaElement.duration < 30) return; // Ignore short ad clips
+        // Simple check to avoid enhancing tiny or ad-like videos (only for video elements)
+        if (mediaElement.tagName === 'VIDEO') {
+            if (mediaElement.videoWidth < 200 || mediaElement.videoHeight < 150) {
+                if (mediaElement.duration < 30) return; // Ignore short ad clips
+            }
         }
 
         console.log('Enhancement Core: Initializing new media element', mediaElement);
