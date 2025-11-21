@@ -267,8 +267,25 @@
         applyStyles() {
             const filterStr = `brightness(${this.filters.brightness}) contrast(${this.filters.contrast}) saturate(${this.filters.saturate}) hue-rotate(${this.filters.hue}deg) blur(${this.filters.blur}px)`;
             const transformStr = `rotate(${this.transform.rotate}deg) scaleX(${this.transform.scaleX}) scaleY(${this.transform.scaleY}) translateX(${this.transform.translateX}px) translateY(${this.transform.translateY}px)`;
-            this.media.style.filter = filterStr;
-            this.media.style.transform = transformStr;
+            
+            // Only apply filter if any values are non-default
+            const hasFilterChanges = this.filters.brightness !== 1 || this.filters.contrast !== 1 || 
+                                    this.filters.saturate !== 1 || this.filters.hue !== 0 || this.filters.blur !== 0;
+            if (hasFilterChanges) {
+                this.media.style.filter = filterStr;
+            } else {
+                this.media.style.filter = '';
+            }
+            
+            // Only apply transform if any values are non-default
+            const hasTransformChanges = this.transform.rotate !== 0 || this.transform.scaleX !== 1 || 
+                                       this.transform.scaleY !== 1 || this.transform.translateX !== 0 || 
+                                       this.transform.translateY !== 0;
+            if (hasTransformChanges) {
+                this.media.style.transform = transformStr;
+            } else {
+                this.media.style.transform = '';
+            }
         }
 
         // --- Actions ---
